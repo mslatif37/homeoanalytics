@@ -1,0 +1,38 @@
+[
+  {
+    "slug": "fig1",
+    "title": "fig1",
+    "alt": "fig1",
+    "url": "/uploads/images/articles/sample_article_chart/fig1.png",
+    "path": "/uploads/images/articles/sample_article_chart/fig1.png",
+    "article_slug": "articles",
+    "width": null,
+    "height": null,
+    "file_size_bytes": 37870,
+    "file_size_human": "37 KB"
+  },
+  {
+    "slug": "fig2",
+    "title": "fig2",
+    "alt": "fig2",
+    "url": "/uploads/images/articles/sample_article_chart/fig2.png",
+    "path": "/uploads/images/articles/sample_article_chart/fig2.png",
+    "article_slug": "articles",
+    "width": null,
+    "height": null,
+    "file_size_bytes": 30376,
+    "file_size_human": "30 KB"
+  },
+  {
+    "slug": "fig3",
+    "title": "fig3",
+    "alt": "fig3",
+    "url": "/uploads/images/articles/sample_article_chart/fig3.png",
+    "path": "/uploads/images/articles/sample_article_chart/fig3.png",
+    "article_slug": "articles",
+    "width": null,
+    "height": null,
+    "file_size_bytes": 211389,
+    "file_size_human": "206 KB"
+  }
+]

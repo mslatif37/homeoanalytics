@@ -1,0 +1,250 @@
+diff --git a/src/components/Contact.tsx b/src/components/Contact.tsx
+new file mode 100644
+index 0000000..f1e2d3c
+--- /dev/null
++++ b/src/components/Contact.tsx
+@@ -0,0 +1,86 @@
++import { FormEvent, useRef, useState } from "react";
++import emailjs from "@emailjs/browser";
++
++export default function Contact() {
++  const [status, setStatus] = useState<"idle"|"sending"|"sent"|"error">("idle");
++  const formRef = useRef<HTMLFormElement>(null);
++
++  async function onSubmit(e: FormEvent<HTMLFormElement>) {
++    e.preventDefault();
++    if (!formRef.current) return;
++    setStatus("sending");
++    try {
++      await emailjs.sendForm(
++        "YOUR_SERVICE_ID",     // ← replace
++        "YOUR_TEMPLATE_ID",    // ← replace
++        formRef.current,
++        { publicKey: "YOUR_PUBLIC_KEY" } // ← replace
++      );
++      setStatus("sent");
++      formRef.current.reset();
++    } catch (err) {
++      console.error(err);
++      setStatus("error");
++    }
++  }
++
++  return (
++    <section className="mx-auto max-w-5xl px-4 py-10">
++      <h1 className="text-4xl font-extrabold mb-2">Contact</h1>
++      <p className="text-gray-600 mb-8">Questions or topics you would like covered? Write to us.</p>
++
++      {status === "sent" && (
++        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-800">
++          Thank you for your message. We’ll get back to you soon.
++        </div>
++      )}
++      {status === "error" && (
++        <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">
++          Sorry, something went wrong. Please try again or email us directly.
++        </div>
++      )}
++
++      <form ref={formRef} onSubmit={onSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
++        <div>
++          <label className="block text-sm font-medium mb-1">Name</label>
++          <input name="from_name" required className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
++        </div>
++        <div>
++          <label className="block text-sm font-medium mb-1">Email</label>
++          <input type="email" name="reply_to" required className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
++        </div>
++        <div className="md:col-span-2">
++          <label className="block text-sm font-medium mb-1">Message</label>
++          <textarea name="message" rows={6} required className="w-full rounded-lg border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
++        </div>
++        <div className="md:col-span-2">
++          <button
++            type="submit"
++            disabled={status === "sending"}
++            className="inline-flex items-center px-5 py-2.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm disabled:opacity-60"
++          >
++            {status === "sending" ? "Sending…" : "Submit"}
++          </button>
++        </div>
++      </form>
++    </section>
++  );
++}
+diff --git a/src/App.tsx b/src/App.tsx
+index 3aaaaaa..4bbbbbb 100644
+--- a/src/App.tsx
++++ b/src/App.tsx
+@@ -1,9 +1,10 @@
+-import React, { useEffect, useMemo, useState } from "react";
++import React, { useEffect, useMemo, useState } from "react";
+ import {
+   Menu, X, ExternalLink, ArrowRight, ChevronLeft, Download,
+   BookOpen, FlaskConical, BrainCircuit,
+   Github, Twitter, Facebook, Instagram
+ } from "lucide-react";
+-import { loadArticles, type Article as ArticleType } from "./content.loader";
++import { loadArticles, type Article as ArticleType, loadBooks, type Book as BookType } from "./content.loader";
++import Contact from "./components/Contact";
+ 
+ const brand = { name: "HomeoAnalytics", tagline: "Homeopathy Meets Analytics" };
+ 
+@@ -33,7 +34,6 @@ function Header({ active, setActive }: { active: string; setActive: (s: string) 
+     { id: "about", label: "About" },
+     { id: "articles", label: "Articles" },
+     { id: "books", label: "Bookshelf" },
+-    { id: "apps", label: "Apps" },
+     { id: "projects", label: "Projects" },
+     { id: "contact", label: "Contact" },
+   ];
+@@ -71,7 +71,7 @@ function Hero({ setActive }: { setActive: (s: string) => void }) {
+   return (
+     <section className="mx-auto max-w-7xl px-4 pt-10 pb-12">
+-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12 text-center">
++      <div className="rounded-3xl p-6 md:p-12 text-center shadow-lg bg-gradient-to-br from-sky-50 via-white to-violet-50">
+         <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 mb-4">HomeoAnalytics</h1>
+         <p className="text-gray-600 text-lg max-w-3xl mx-auto mb-6">
+           Explore classical homeopathic sources with modern data analysis. Clean datasets, reproducible methods, and clear visualizations
+@@ -170,39 +170,34 @@ function Projects() {
+   );
+ }
+ 
+-function Bookshelf() {
+-  const books = [
+-    { title: "Classical Homeopathy Revisited", desc: "Free download of annotated classics.", free: true, url: "/books/classical-homeopathy-revisited.pdf" },
+-    { title: "Analytics Toolkit", desc: "Subscription — datasets + CSV/JSON exports.", free: false, url: "YOUR_STRIPE_CHECKOUT_LINK_1" },
+-  ];
++function Bookshelf() {
++  const [items, setItems] = useState<BookType[]>([]);
++  useEffect(() => { (async () => setItems(await loadBooks()))(); }, []);
+   return (
+     <section className="mx-auto max-w-7xl px-4 py-10">
+-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12">
++      <div className="rounded-2xl p-6 md:p-12 shadow-lg bg-gradient-to-br from-emerald-50 via-white to-sky-50">
+         <h2 className="text-3xl md:text-4xl font-bold mb-6">Bookshelf</h2>
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+-          {books.map((b) => (
+-            <div key={b.title} className="p-6 bg-gray-50 rounded-xl shadow hover:shadow-md">
+-              <h3 className="text-xl font-semibold">{b.title}</h3>
+-              <p className="text-gray-600 my-2">{b.desc}</p>
+-              {b.free ? (
+-                <a
+-                  href={b.url}
+-                  download
+-                  className="inline-flex items-center px-4 py-2 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition"
+-                >
+-                  Free Download
+-                  <Download className="w-4 h-4 ml-2" />
+-                </a>
+-              ) : (
+-                <a
+-                  href={b.url}
+-                  target="_blank"
+-                  rel="noopener noreferrer"
+-                  className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition"
+-                >
+-                  Subscribe
+-                  <ExternalLink className="w-4 h-4 ml-2" />
+-                </a>
+-              )}
++          {items.map(b => (
++            <div key={b.key} className="rounded-xl border bg-white p-6 hover:shadow-xl transition-shadow">
++              <h3 className="text-xl font-semibold mb-2">{b.title}</h3>
++              {b.description && <p className="text-gray-600 my-2 mb-2">{b.description}</p>}
++              {b.download_url ? (
++                <a
++                  href={b.download_url}
++                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700"
++                >
++                  <Download className="w-4 h-4" />
++                  Free Download
++                </a>
++              ) : (
++                <span className="inline-flex items-center px-4 py-2 rounded-lg bg-gray-200 text-gray-700">
++                  Coming soon
++                </span>
++              )}
+             </div>
+           ))}
+         </div>
+       </div>
+     </section>
+   );
+ }
+@@ -210,60 +205,6 @@ function Bookshelf() {
+ 
+-function Apps() {
+-  const apps = [
+-    { title: "Binary Remedy Resolver", desc: "Interactive differentiation engine.", sub: true, url: "YOUR_STRIPE_CHECKOUT_LINK_2" },
+-    { title: "Case Simulator", desc: "100 real-world cases with analytics.", sub: true, url: "YOUR_STRIPE_CHECKOUT_LINK_3" },
+-  ];
+-  return (
+-    <section className="mx-auto max-w-7xl px-4 py-10">
+-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12">
+-        <h2 className="text-3xl md:text-4xl font-bold mb-6">Apps</h2>
+-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+-          {apps.map((app) => (
+-            <div key={app.title} className="p-6 bg-gray-50 rounded-xl shadow hover:shadow-md">
+-              <h3 className="text-xl font-semibold">{app.title}</h3>
+-              <p className="text-gray-600 my-2">{app.desc}</p>
+-              <a
+-                href={app.url}
+-                target="_blank"
+-                rel="noopener noreferrer"
+-                className="inline-flex items-center px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition"
+-              >
+-                Subscribe
+-                <ExternalLink className="w-4 h-4 ml-2" />
+-              </a>
+-            </div>
+-          ))}
+-        </div>
+-      </div>
+-    </section>
+-  );
+-}
+-
+-// The Contact component with the functional form
+-function Contact() {
+-  return (
+-    <section className="mx-auto max-w-7xl px-4 py-10">
+-      <div className="bg-white rounded-2xl shadow-lg p-6 md:p-12">
+-        <h2 className="text-3xl md:text-4xl font-bold mb-4">Contact</h2>
+-        <p className="text-gray-700 text-lg mb-6">Questions or topics you would like covered? Write to us.</p>
+-        <form
+-          className="grid gap-4 md:grid-cols-2"
+-          action="https://formspree.io/f/mblabqdk"
+-          method="POST"
+-        >
+-          <div>
+-            <label className="block text-gray-700 font-medium mb-1">Name</label>
+-            <input className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand" type="text" name="name" required />
+-          </div>
+-          <div>
+-            <label className="block text-gray-700 font-medium mb-1">Email</label>
+-            <input type="email" className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand" name="_replyto" required />
+-          </div>
+-          <div className="md:col-span-2">
+-            <label className="block text-gray-700 font-medium mb-1">Message</label>
+-            <textarea rows={4} className="w-full p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-brand" name="message" required />
+-          </div>
+-          <div className="md:col-span-2">
+-            <button type="submit" className="inline-flex items-center bg-brand hover:bg-brand-dark text-white font-medium px-6 py-2 rounded-lg transition">Send Message</button>
+-          </div>
+-        </form>
+-      </div>
+-    </section>
+-  );
+-}
++// (Inline Contact component removed; now using src/components/Contact.tsx)
+ 
+ function ArticleDetail(
+   { articleKey, onBack, items }: { articleKey: string; onBack: () => void; items: ArticleType[] }
+ ) {
+@@ -310,7 +251,6 @@ export default function App() {
+         {active === "books" && <Bookshelf />}
+-        {active === "apps" && <Apps />}
+         {active === "projects" && <Projects />}
+         {active === "contact" && <Contact />}
+       </main>
